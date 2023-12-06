@@ -1,4 +1,5 @@
 #  Confus3r - Dependency Confusion Checker.
+<img src="gitimg/DALL-E.png" width="400"/>
 Burp Extension to find dependency confusion attacks. 
  
 Copyright (c) 2023 Rishikesh J
