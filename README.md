@@ -17,3 +17,4 @@ Once you've loaded the plugin there is some things to consider.
 Burp performs threading on passive scanning by itself. This can be controlled by looking at the Scanner options.
 The tool won't scan js,txt etc files but only JSON files to check for dependencies as to reduce the false positives.
 
+<img src="gitimg/Screenshot.png" width="400"/>
