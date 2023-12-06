@@ -14,4 +14,5 @@ before installing.
 
 Once you've loaded the plugin there is some things to consider.
 Burp performs threading on passive scanning by itself. This can be controlled by looking at the Scanner options.
-The tool only looks for package.json file,if burp has crawled over the file and if you navigated to the same you'll get an alert if any dependecy is missing.
+The tool won't scan js,txt etc files but only JSON files to check for dependencies as to reduce the false positives.
+
