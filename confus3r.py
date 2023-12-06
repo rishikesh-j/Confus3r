@@ -6,6 +6,7 @@ from burp import IScanIssue
 from burp import IScannerCheck
 import json
 import urllib2
+import re
 
 class BurpExtender(IBurpExtender, IScannerCheck):
     def registerExtenderCallbacks(self, callbacks):
@@ -46,46 +47,44 @@ class BurpExtender(IBurpExtender, IScannerCheck):
         issues = []
         headers, body = self.getResponseHeadersAndBody(baseRequestResponse)
 
-        # Check if the response body contains package.json
-        if "package.json" in baseRequestResponse.getUrl().toString():
-            # Get the response content
-            response = self._helpers.bytesToString(baseRequestResponse.getResponse())
+        try:
+            # Try to parse the extracted JSON content
+            json_data = json.loads(body)
 
-            try:
-                # # Try to parse the extracted JSON content
-                json_data = json.loads(body)
+            # Extract dependencies and devDependencies keys
+            dependencies_keys = json_data.get("dependencies", {}).keys()
+            dev_dependencies_keys = json_data.get("devDependencies", {}).keys()
 
-                # Extract dependencies and devDependencies keys
-                dependencies_keys = json_data.get("dependencies", {}).keys()
-                dev_dependencies_keys = json_data.get("devDependencies", {}).keys()
+            # Combine both keys into the same array
+            npm_registries = list(dependencies_keys) + list(dev_dependencies_keys)
+            # Print the keys under dependencies
+            # Print the keys under dependencies along with the URL
+            print("NPM Registries in {}: {}".format(baseRequestResponse.getUrl().toString(), npm_registries))
 
-                # Combine both keys into the same array
-                npm_registries = list(dependencies_keys) + list(dev_dependencies_keys)
-                # Print the keys under dependencies
-                print(npm_registries)
 
-                missing_dependencies = []
-                for registry in npm_registries:
-                    missing_dependencies.extend(self.check_npm_registry(registry))
+            missing_dependencies = []
+            for registry in npm_registries:
+                missing_dependencies.extend(self.check_npm_registry(registry))
 
-                if missing_dependencies:
-                    self._callbacks.issueAlert("Missing dependencies in npm registry. Check Issue Activity!")
-                    self._callbacks.printOutput("Missing dependencies in npm registry. Check Issue Activity!")
-                    # Report the issue
-                    issues.append(NpmRegistryScanIssue(
-                        baseRequestResponse.getHttpService(),
-                        self._helpers.analyzeRequest(baseRequestResponse).getUrl(),
-                        [baseRequestResponse],
-                        missing_dependencies
-                    ))
+            if missing_dependencies:
+                self._callbacks.issueAlert("Missing dependencies in npm registry. Check Issue Activity!")
+                self._callbacks.printOutput("Missing dependencies in npm registry. Check Issue Activity!")
+                # Report the issue
+                issues.append(NpmRegistryScanIssue(
+                    baseRequestResponse.getHttpService(),
+                    self._helpers.analyzeRequest(baseRequestResponse).getUrl(),
+                    [baseRequestResponse],
+                    missing_dependencies
+                ))
 
-            except ValueError as e:
-                print("Error decoding JSON: {}".format(e))
+        except ValueError as e:
+            print("Error decoding JSON: {}".format(e))
 
         if not issues:
             issues = None
 
         return issues
+
 
     def doActiveScan(self, baseRequestResponse, insertionPoint):
         pass
